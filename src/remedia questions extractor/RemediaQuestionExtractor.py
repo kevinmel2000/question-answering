@@ -25,21 +25,22 @@ class RemediaQuestionExtractor:
 
     def extractQuestions(self):
         self.output_file = open(self.output_dir + "questions.csv", "w")
-        qre = re.compile("(\d)(\s*[.])(.*[?])")
+        self.output_file.write("Order in file,Clean Question,Tagged Elements,Full Question\n")
+        qre = re.compile("(\d)(\s*[.]\s*)([^\s].*[?])")
         levelre = re.compile("level\d")
+        tagre = re.compile('[<][^<]*[>][^<>]*[</][^<]*[>]')
+        valuere = re.compile('[<][^<]*[>]([^<>]*)[</][^<]*[>]')
         for root, dirs, files in os.walk(self.remedia_root):
             if 'CVS' in dirs:
                 dirs.remove('CVS')  # don't visit CVS directories
             if '.svn' in dirs:
                 dirs.remove('.svn')  # don't visit CVS directories
             m = re.search(levelre,root)
-            if (m == None):
-				print root
             for qfile in files:
-                self.extractQuestionsFromFile(qfile,root,qre,m.group(0))
+                self.extractQuestionsFromFile(qfile,root,qre,m.group(0),tagre,valuere)
         self.output_file.close()
      
-    def extractQuestionsFromFile(self,qfile,qdir,qre, level):
+    def extractQuestionsFromFile(self,qfile,qdir,qre,level,tagre,valuere):
         f = open(path.join(qdir,qfile),'r')
         while 1:
             line = f.readline()
@@ -48,12 +49,14 @@ class RemediaQuestionExtractor:
             line = line.strip(" \t\n")
             m = re.match(qre,line)
             if (m != None):
-                escaped = replace(m.group(0),'"','""')
-                escaped2 = replace(m.group(3),'"','""').strip(" \t\n")
-                output_line = '"' + escaped + '","' + escaped2 + '",' + level + ',' + qfile +  '\n'
+                tags = re.findall(tagre,m.group(3))
+                values = re.findall(valuere,m.group(3))
+                clean_text = reduce(lambda x,y: replace(x,y[0],y[1]), [m.group(3)] + map(lambda x,y : (x,y),tags,values))
+                newline = [m.group(1), clean_text, str(tags), m.group(0)]
+                output_line = reduce(lambda x,y : x + ',' + y, map(lambda x: '"' + replace(x,'"','""') + '"', newline)) + '\n'
                 self.output_file.write(unicode(output_line))
-                print output_line
         f.close()
+
 class InvalidPathException(Exception):
     def __init__(self):
         return
