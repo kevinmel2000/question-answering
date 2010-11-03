@@ -13,7 +13,7 @@
 
 2.  What was <ENAMEX TYPE="PERSON">Columbus</ENAMEX> trying to find?
 
-3.  Where was <ENAMEX TYPE="PERSON">Columbus’</ENAMEX> home?
+3.  Where was <ENAMEX TYPE="PERSON">Columbus</ENAMEX> home?
 
 4.  When did they spot land?
 
