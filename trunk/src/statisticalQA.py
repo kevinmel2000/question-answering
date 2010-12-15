@@ -1,5 +1,6 @@
 import nltk
 import csv
+import re
 
 def stemString(text):
     tokens = nltk.tokenize.TreebankWordTokenizer().tokenize(text)
@@ -10,10 +11,7 @@ def getStory(path):
     text = file.read()
     story = text[text.find(')')+1:text.find('1. ')]
     story = story.replace('."','".')
-    for i in range(0,len(story)-1):
-        if story[i].isalpha():
-            break
-    story = story[i:]
+    story = story[story.index(re.search('[A-Z]',story).group(0)):]
     return story.strip()
 
 def answerQuestion(question, story, answer):
@@ -26,16 +24,16 @@ def answerQuestion(question, story, answer):
 
     answer = answer[2:len(answer)-2]
     
-    print '============================================'
-    print story
-    print '----------------------'
-    print question
-    print sentences[bestAnswer]
-    print answer
-    print sentences[bestAnswer]==answer
+    #print '============================================'
+    #print story
+    #print '----------------------'
+    #print question
+    #print sentences[bestAnswer]
+    #print answer
+    #print sentences[bestAnswer]==answer
 
     return sentences[bestAnswer]==answer
 
 if __name__ == '__main__':
-    z = map(lambda x: answerQuestion(x[3], getStory('remedia_release'+x[0]), x[4]), csv.reader(open('questions1.csv', 'r')))
+    z = map(lambda x: answerQuestion(x[3], getStory('../resources/remedia_release'+x[0]), x[4]), csv.reader(open('../resources/remedia_questions/questions1.csv', 'r')))
     print (z.count(True)*100.0)/len(z)
