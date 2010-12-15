@@ -6,6 +6,7 @@ from string import replace
 class RemediaQuestionExtractor:
     " " " browses the remedia corpus " " "
     def __init__ (self, remedia_root = None, output_dir = None):
+        # compute absolute paths and check if are valid
         if (remedia_root == None):
             self.remedia_root = path.abspath("../../resources/remedia_release/")
         else:
@@ -24,35 +25,72 @@ class RemediaQuestionExtractor:
             raise InvalidPathException
 
     def extractQuestions(self):
-        self.output_file = open(self.output_dir + "questions.csv", "w")
-        self.output_file.write("File,Level,Order in file,Clean Question,Tagged Elements,Full Question\n")
-        qre = re.compile("(\d)(\s*[.]\s*)([^\s].*[?])")
-        levelre = re.compile("(level)(\d)")
-        tagre = re.compile('[<][^<]*[>][^<>]*[</][^<]*[>]')
-        valuere = re.compile('[<][^<]*[>]([^<>]*)[</][^<]*[>]')
+        self.output_file = open(self.output_dir + "questions.csv", "w") # create or overwrite outputfile
+        self.output_file.write('File,Level,Order in file,Clean Question,Tagged Elements,Full Question,Answer\n')
+        # some regex needed
+        self.qre = re.compile('(\d)(\s*[.]\s*)([^\s].*[?])')
+        self.ansre = re.compile('([<]ANSQ)(\d)([>])')
+        self.levelre = re.compile("(level)(\d)")
+        self.tagre = re.compile('[<][^<]*[>][^<>]*[</][^<]*[>]')
+        self.valuere = re.compile('[<][^<]*[>]([^<>]*)[</][^<]*[>]')
+        # browse folder for files
         for root, dirs, files in os.walk(self.remedia_root):
             if 'CVS' in dirs:
                 dirs.remove('CVS')  # don't visit CVS directories
             if '.svn' in dirs:
                 dirs.remove('.svn')  # don't visit CVS directories
-            m = re.search(levelre,root)
+            m = re.search(self.levelre,root) # extract level from path
             for qfile in files:
-                self.extractQuestionsFromFile(qfile,root,qre,m.group(2),tagre,valuere)
-        self.output_file.close()
-     
-    def extractQuestionsFromFile(self,qfile,qdir,qre,level,tagre,valuere):
+                self.extractQuestionsFromFile(qfile,root,m.group(2))
+        self.output_file.close() # close output file
+
+    def cleanOtherTags(self,text_to_clean):
+        # clean tags from text
+        tags = re.findall(self.tagre,text_to_clean)
+        values = re.findall(self.valuere,text_to_clean)
+        clean_text = reduce(lambda x,y: replace(x,y[0],y[1]), [text_to_clean] + map(lambda x,y : (x,y),tags,values))
+        print clean_text
+        return [clean_text,tags]
+
+    def extractAnswerParts(self,line,qno):
+        half='([<]ANSQ' + qno + '[>])(.*)([<]/ANSQ' + qno +  '[>])'
+        are = re.compile(half + '(.*)' +  half)
+        hre = re.compile(half)
+        x = re.search(are,line)
+        if x != None:
+            t1 = x.group(1) + x.group(2) + x.group(3)
+            t2 = x.group(5) + x.group(6) + x.group(7)
+            return self.extractAnswerParts(t1,qno) + self.extractAnswerParts(t2,qno)
+        else:
+            x = re.search(hre,line)
+            if x != None:
+                t = self.cleanOtherTags(x.group(2))[0]
+                return [t]
+            else:
+                return []
+        
+    def extractQuestionsFromFile(self,qfile,qdir,level):
         f = open(path.join(qdir,qfile),'r')
+        answers=dict()
         while 1:
             line = f.readline()
             if not line:
                 break
             line = line.strip(" \t\n")
-            m = re.match(qre,line)
+            a = re.findall(self.ansre,line)
+            for tagans in a:
+                number = tagans[1]
+                answer = self.extractAnswerParts(line,number)
+                if len(answer) > 0:
+                    answers[number] = str(answer)
+            m = re.match(self.qre,line)
             if (m != None):
-                tags = re.findall(tagre,m.group(3))
-                values = re.findall(valuere,m.group(3))
-                clean_text = reduce(lambda x,y: replace(x,y[0],y[1]), [m.group(3)] + map(lambda x,y : (x,y),tags,values))
+                [clean_text, tags] = self.cleanOtherTags(m.group(3))
                 newline = [replace(path.join(qdir,qfile),self.remedia_root,""),level,m.group(1), clean_text, str(tags), m.group(0)]
+                if m.group(1) in answers.keys():
+                    newline = newline + [answers[m.group(1)]]
+                else:
+                    newline = newline + ['']
                 output_line = reduce(lambda x,y : x + ',' + y, map(lambda x: '"' + replace(x,'"','""') + '"', newline)) + '\n'
                 self.output_file.write(unicode(output_line))
         f.close()
