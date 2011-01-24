@@ -25,7 +25,7 @@ def getBestAnswer(question, constraints, story):
     cnt = map(lambda x: sum(map(lambda y: 1 if x in y else 0, sentences)), words)
     idf = dict(map(lambda x,y: (x,0) if y==0 else (x, len(sentences)*1.0/y), words, cnt))
 
-    score = map(lambda sent: sum(map(lambda w: idf[w]*weight[w]*getScore(constraints,sent) if w in stemString(sent) else 0, words)), sentences)
+    score = map(lambda sent: sum(map(lambda w: weight[w]*getScore(constraints,sent) if w in stemString(sent) else 0, words)), sentences)
     bestAnswer = score.index(max(score))
     
     return sentences[bestAnswer]
