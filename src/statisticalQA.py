@@ -20,11 +20,11 @@ def answerQuestion(question, story, answer):
     stopWords = nltk.corpus.stopwords.words('english')
     sentences = nltk.tokenize.PunktSentenceTokenizer().tokenize(story)
     
-    cnt = map(lambda x: reduce(lambda a,b: a+b, map(lambda y: 1 if x in y else 0, sentences), 0), stems)
+    cnt = map(lambda x: sum(map(lambda y: 1 if x in y else 0, sentences)), stems)
     idf = dict(map(lambda x,y: (x,0) if y==0 else (x, len(sentences)*1.0/y), stems, cnt))
     
     keywords = reduce(lambda x,y: x+[y] if y != '' else x, map(lambda x: x if x not in stopWords and x != '?' else '', stems), [])
-    noMatches = map(lambda x: reduce(lambda y,z: y+z, map(lambda k: idf[k] if k in stemString(x) else 0, stems), 0), sentences)
+    noMatches = map(lambda x: sum(map(lambda k: idf[k] if k in stemString(x) else 0, stems)), sentences)
     bestAnswer = noMatches.index(max(noMatches))
 
     answer = answer[2:len(answer)-2]
