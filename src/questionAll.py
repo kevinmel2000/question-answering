@@ -5,7 +5,7 @@ import re
 def getStory(path):
     file = open(path, 'r')
     text = file.read()
-    story = text[text.find(')')+1:text.index(re.search('1.(\s+)Wh',text).group(0))]
+    story = text[text.find('(')-1:text.index(re.search('1.(\s+)Wh',text).group(0))]
     story = story.replace('."','".')
     story = story[story.index(re.search('[A-Z]',story).group(0)):]
     return story.strip()
@@ -40,11 +40,11 @@ def getPossibleAnswer(question, story_path):
     return 'a'
 
 def correctAnswer(text1, text2):
-    print "-----------------------------------"
-    print text1
-    print text2
+    #print "-----------------------------------"
+    #print text1
+    #print text2
     if text1==text2:
-        print "MATCH"
+        #print "MATCH"
         return 1;
     else:
         return 0;
