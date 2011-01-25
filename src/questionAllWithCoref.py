@@ -8,10 +8,17 @@ def stemSentence(text):
     tokens = nltk.tokenize.TreebankWordTokenizer().tokenize(text)
     return map(lambda x: nltk.PorterStemmer().stem(x).lower(), tokens)
 
+def plain(text):
+    text = replace(text,'\n',' ');
+    text = replace(text,'\t',' ');
+    while '  ' in text:
+        text = replace(text,'  ',' ');
+    text = text.strip(' ');
+    return text;
 
 def getGroup(item):
-	if(item):
-		return item.group(1).lower()
+    if(item):
+        return item.group(1).lower()
 
 def getNamedEntities(path):
 	lines = map(lambda line: line, open(path).xreadlines())
@@ -56,7 +63,7 @@ def getAnswers(snraStory,ansre):
         line = snraFile.readline();
         if not line:
             break;
-        line = line.strip(" \t\n");
+        line = plain(line);
         a = re.findall(ansre,line);
         for tagans in a:
             number = tagans[1];
@@ -64,9 +71,7 @@ def getAnswers(snraStory,ansre):
             if len(answer) > 0:
                 answers[number] = str(answer);
                 for k in corrections.keys():
-                    answers[number]=replace(answers[number],k,corrections[k]);    
-    
-
+                    answers[number]=replace(answers[number],k,corrections[k]);  
     snraFile.close();
     return answers;
 
@@ -77,7 +82,7 @@ def getQuestions(corefStory,qre,answers):
         line = corefFile.readline();
         if not line:
             break;
-        line = line.strip(" \t\n");
+        line = plain(line);
         m = re.match(qre,line);
         if (m != None):
             if m.group(1) in answers.keys():
@@ -91,9 +96,9 @@ def processQuestion(question,corefre1,corefre2,corefre3,corefre4,corefre5,corefr
     ids=dict();
     text=question[0];
     corrections={'Mr.':'Mr','Dr.':'Dr','Oct.':'Oct','Mrs.':'Mrs','St.':'St','ST.':'ST','P.T.':'PT','MT.':'MT','Mt.':'Mt','A.D.':'AD'};
+    text=plain(text);
     for k in corrections.keys():
         text=replace(text,k,corrections[k]);    
-    
     corefs=re.findall(corefre4,text);
     for coref in corefs:
         alltag=reduce(lambda x, y: x+y, coref);
@@ -136,6 +141,7 @@ def processQuestion(question,corefre1,corefre2,corefre3,corefre4,corefre5,corefr
 def getText(corefStory,corefre1,corefre2,corefre3,corefre4,corefre5,corefre6):
     corefFile = open(corefStory, 'r')
     text = corefFile.read()
+    text=plain(text);
     story = text[text.find('(')-2:text.index(re.search('1.(\s+)Wh',text).group(0))]
     corrections={'Mr.':'Mr','Dr.':'Dr','Oct.':'Oct','Mrs.':'Mrs','St.':'St','ST.':'ST','P.T.':'PT','MT.':'MT','Mt.':'Mt','A.D.':'AD'};
     for k in corrections.keys():
