@@ -1,0 +1,14 @@
+* TODO De scos \n\t (Mihai)
+* TODO De jonglat cu weighturile (Mihai)
+** TODO Location, time, name
+* TODO De calculat weight-uri pentru POS (Tudor)
+* TODO De tratat cazul in care sunt mai multe raspunsuri corecte (Andrei)
+  + Splituim dupa ', '
+  + Dăm la săraci juma de punct dacă ghicesc o parte.
+  + Dăm un punct, zice Mihai
+* TODO De încercat un threshold pentru match răspuns lipsă. (Andrei)
+* TODO De coafat codul (Tudor) 
+** TODO Clase
+** TODO Comentarii in spaniola / engleza
+* TODO De manarit scorurile, de scazut 1 din countere
+
