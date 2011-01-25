@@ -1,7 +1,7 @@
 import re
 import glob
 import nltk
-import path
+import math
 from string import replace
 
 
@@ -126,6 +126,9 @@ def processQuestion(question,corefre1,corefre2,corefre3,corefre4,corefre5,corefr
     for coref in corefs:
         alltag=reduce(lambda x, y: x+y, coref);
         text=replace(text,alltag,coref[1]);
+
+    print text;
+    
     tokens = nltk.tokenize.TreebankWordTokenizer().tokenize(text);
     pos = nltk.pos_tag(tokens);
     weighted_tokens=(map(lambda (x,y): (nltk.PorterStemmer().stem(x).lower(),weights[y],int(ids[x]) if x in ids.keys() else 0),pos));
@@ -222,11 +225,11 @@ def getText(corefStory,corefre1,corefre2,corefre3,corefre4,corefre5,corefre6):
                 alltag=reduce(lambda x, y: x+y, coref);
                 text=replace(text,alltag,coref[1]);
                 gasit=True
-        print text
+        #print text
         sent2=sent2+[(text,ids)];
-    print "==========++++++++========="
- #   print sent2;
-  #  print "==========++++++++========="
+    #print "==========++++++++========="
+    #print sent2;
+    #print "==========++++++++========="
     return sent2;
 
 
@@ -289,6 +292,11 @@ def getBestAnswer(question, constraints, sentences, entities):
 
     score = map(lambda sent: similarity(question, idf, constraints, sent, entities), sentences)
     bestAnswer = score.index(max(score))
+
+    for i in range(0,len(score)):
+        print "%.2f" % score[i],
+        print " " + sentences[i][0]
+    
     return sentences[bestAnswer][0]
 
 
