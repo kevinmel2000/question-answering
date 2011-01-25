@@ -138,37 +138,63 @@ def processQuestion(question,corefre1,corefre2,corefre3,corefre4,corefre5,corefr
     #print weighted_tokens;
     return [weighted_tokens,question[1],constraints];
 
+def splitHeader(header):
+    #print '================'
+    #print '================'
+    #print header
+    s1=header[:header.find(')')+1];
+    s1=plain(s1);
+    if s1[:5] == 'COREF':
+        s1='(<'+s1;
+    elif s1[:5] == 'MARKA':
+        s1='(<'+s1;
+    elif s1[0:1] <> '(':
+        s1='('+s1; 
+    s2=header[header.find(')')+1:];
+    s2=s2.strip(' -');
+    s2=plain(s2);
+    #print '================'
+    #print 's1: ' + s1;
+    #print '================'
+    #print 's2: ' + s2;
+    #print '================'
+    return [s1,s2]
+
 def getText(corefStory,corefre1,corefre2,corefre3,corefre4,corefre5,corefre6):
     corefFile = open(corefStory, 'r')
     text = corefFile.read()
     text=plain(text);
-    story = text[text.find('(')-2:text.index(re.search('1.(\s+)Wh',text).group(0))]
-    corrections={'Mr.':'Mr','Dr.':'Dr','Oct.':'Oct','Mrs.':'Mrs','St.':'St','ST.':'ST','P.T.':'PT','MT.':'MT','Mt.':'Mt','A.D.':'AD'};
+    story = text[text.find('('):text.index(re.search('1.(\s+)Wh',text).group(0))]
+    corrections={'Mr.':'Mr','Dr.':'Dr','Oct.':'Oct','Mrs.':'Mrs','St.':'St','ST.':'ST','P.T.':'PT','MT.':'MT','Mt.':'Mt','A.D.':'AD','A.T.':'AT'};
     for k in corrections.keys():
         story=replace(story,k,corrections[k]);    
     story = story.replace('."','".')
     story = story[story.index(re.search('[A-Z]',story).group(0)):]
     corefFile.close();
     sentences=nltk.tokenize.PunktSentenceTokenizer().tokenize(story);
-    if sentences[0][:5] == 'COREF':
-        sentences[0]='(<'+sentences[0];
-    elif sentences[0][:5] == 'MARKA':
-        sentences[0]='(<'+sentences[0];
-    else:
-        sentences[0]='('+sentences[0];
-
-    s1 = sentences[0][:sentences[0].find(') ')+2];
     
-    sentences[0] = replace(sentences[0],s1+'- ','');
-    sentences[0] = replace(sentences[0],s1,'');
+    #if sentences[0][:5] == 'COREF':
+    #    sentences[0]='(<'+sentences[0];
+    #elif sentences[0][:5] == 'MARKA':
+    #    sentences[0]='(<'+sentences[0];
+    #else:
+    #    print 'adaug ( la ' + sentences[0]
+    #    sentences[0]='('+sentences[0];
 
-    sentences = [s1] + sentences;
+    #s1 = sentences[0][:sentences[0].find(')')+2];
+    
+    #sentences[0] = replace(sentences[0],s1+'-','');
+    #sentences[0] = replace(sentences[0],s1,'');
 
-    print s1;
+    #sentences = [s1] + sentences;
+
+
+    sentences=splitHeader(sentences[0])+sentences[1:];
+    
     sent2=[];
     for s in sentences:
         text=s;
-        text = text.strip(" \t\n");
+        text = plain(text);
         ids=[];
         gasit = True;
         while gasit == True:
@@ -195,10 +221,11 @@ def getText(corefStory,corefre1,corefre2,corefre3,corefre4,corefre5,corefre6):
                 alltag=reduce(lambda x, y: x+y, coref);
                 text=replace(text,alltag,coref[1]);
                 gasit=True
+        print text
         sent2=sent2+[(text,ids)];
     print "==========++++++++========="
-    print sent2;
-    print "==========++++++++========="
+ #   print sent2;
+  #  print "==========++++++++========="
     return sent2;
 
 
@@ -229,15 +256,15 @@ def similarity(question, idf, constraints, sentence, entities):
     return score*getScore(constraints, sentence[0], entities)
 
 def correctAnswer(text1, text2):
-    print "-----------------------------------"
+    #print "-----------------------------------"
     text2 = text2.replace('."','".');
     if text2[-2:]==' -':
         text2 = text2.replace(' -','');
-    print text1
-    print text2
+    #print text1
+    #print text2
 
     if text1==text2:
-        print "MATCH"
+        #print "MATCH"
         return 1;
     else:
         return 0;
