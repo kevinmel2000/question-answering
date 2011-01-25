@@ -1,6 +1,7 @@
 import re
 import glob
 import nltk
+import path
 from string import replace
 
 
@@ -256,18 +257,26 @@ def similarity(question, idf, constraints, sentence, entities):
     return score*getScore(constraints, sentence[0], entities)
 
 def correctAnswer(text1, text2):
-    #print "-----------------------------------"
     text2 = text2.replace('."','".');
     if text2[-2:]==' -':
         text2 = text2.replace(' -','');
-    #print text1
-    #print text2
 
-    if text1==text2:
-        #print "MATCH"
-        return 1;
-    else:
-        return 0;
+    print text1
+    print text2
+
+    ret = 0
+    lst = text2.split("', '")
+    for ans in lst:
+        if ans.startswith("'"):
+            ans = ans[1:]
+        if ans.endswith("'"):
+            ans = ans[0:len(ans)-1]
+        if text1==ans:
+            print "MATCH"
+            ret = 1
+    print "-----------------------------------"
+
+    return ret
 
 def getBestAnswer(question, constraints, sentences, entities):
     #question = [(word, weight, refid), ...]
@@ -276,7 +285,7 @@ def getBestAnswer(question, constraints, sentences, entities):
     #entities = ([name, ...], [location, ...], [date, ...])
     
     cnt = map(lambda w: sum(map(lambda sent: 1 if w[0] in stemSentence(sent[0]) else 0, sentences)), question)
-    idf = dict(map(lambda w,c: (w[0],0) if c==0 else (w[0], len(sentences)*1.0/c), question, cnt))
+    idf = dict(map(lambda w,c: (w[0],0) if c==0 else (w[0], math.log(len(sentences)*1.0/c)), question, cnt))
 
     score = map(lambda sent: similarity(question, idf, constraints, sent, entities), sentences)
     bestAnswer = score.index(max(score))
