@@ -108,26 +108,23 @@ def processQuestion(question,corefre1,corefre2,corefre3,corefre4,corefre5,corefr
     for coref in corefs:
         alltag=reduce(lambda x, y: x+y, coref);
         text=replace(text,alltag,coref[1]);
-    corefs=re.findall(corefre6,text)+re.findall(corefre3,text)+re.findall(corefre2,text)+re.findall(corefre1,text)
+    corefs=re.findall(corefre3,text)+re.findall(corefre2,text)+re.findall(corefre1,text)
     for coref in corefs:
         alltag=reduce(lambda x, y: x+y, coref);
         text=replace(text,alltag,coref[3]);
         words=tokens = nltk.tokenize.TreebankWordTokenizer().tokenize(coref[3]);
         word=reduce(lambda x, y: x if len(x) > len(y) else y, words);
         ids[word]=coref[1];
-    corefs=re.findall(corefre5,text);
+    corefs=re.findall(corefre5,text) + re.findall(corefre6,text)
     for coref in corefs:
         alltag=reduce(lambda x, y: x+y, coref);
         text=replace(text,alltag,coref[3]);
-        words=tokens = nltk.tokenize.TreebankWordTokenizer().tokenize(coref[3]);
-        word=reduce(lambda x, y: x if len(x) > len(y) else y, words);
-        ids[word]=coref[1];
     corefs=re.findall(corefre4,text);
     for coref in corefs:
         alltag=reduce(lambda x, y: x+y, coref);
         text=replace(text,alltag,coref[1]);
 
-    print text;
+        #print text;
     
     tokens = nltk.tokenize.TreebankWordTokenizer().tokenize(text);
     pos = nltk.pos_tag(tokens);
@@ -208,17 +205,16 @@ def getText(corefStory,corefre1,corefre2,corefre3,corefre4,corefre5,corefre6):
                 alltag=reduce(lambda x, y: x+y, coref);
                 text=replace(text,alltag,coref[1]);
                 gasit=True
-            corefs=re.findall(corefre6,text)+re.findall(corefre3,text)+re.findall(corefre2,text)+re.findall(corefre1,text)
+            corefs=re.findall(corefre3,text)+re.findall(corefre2,text)+re.findall(corefre1,text)
             for coref in corefs:
                 alltag=reduce(lambda x, y: x+y, coref);
                 text=replace(text,alltag,coref[3]);
-                ids=ids+[coref[1]];
+                ids=ids+[int(coref[1])];
                 gasit=True
-            corefs=re.findall(corefre5,text);
+            corefs=re.findall(corefre6,text)+re.findall(corefre5,text);
             for coref in corefs:
                 alltag=reduce(lambda x, y: x+y, coref);
                 text=replace(text,alltag,coref[3]);
-                ids=ids+[coref[1]];
                 gasit=True
             corefs=re.findall(corefre4,text);
             for coref in corefs:
@@ -254,8 +250,11 @@ def similarity(question, idf, constraints, sentence, entities):
     score = 0;
     stemmed=stemSentence(sentence[0]);
     for word in question:
-        if (word[0] in stemmed) or (word[2] in sentence[1]):
+        if (word[0] in stemmed):
             score += idf[word[0]]*word[1]
+        elif(word[2] in sentence[1]):
+            #print 'Un cacat on ploaie!'
+            score += 0.6*word[1];#idf[word[0]]*word[1]
         ###print 'Cai-utam ' + word[0] + ' in ' + str(stemmed);
     return score*getScore(constraints, sentence[0], entities)
 
@@ -264,8 +263,8 @@ def correctAnswer(text1, text2):
     if text2[-2:]==' -':
         text2 = text2.replace(' -','');
 
-    print text1
-    print text2
+    #print text1
+    #print text2
 
     ret = 0
     lst = text2.split("', '")
@@ -275,9 +274,9 @@ def correctAnswer(text1, text2):
         if ans.endswith("'"):
             ans = ans[0:len(ans)-1]
         if text1==ans:
-            print "MATCH"
+            #print "MATCH"
             ret = 1
-    print "-----------------------------------"
+    #print "-----------------------------------"
 
     return ret
 
@@ -293,9 +292,9 @@ def getBestAnswer(question, constraints, sentences, entities):
     score = map(lambda sent: similarity(question, idf, constraints, sent, entities), sentences)
     bestAnswer = score.index(max(score))
 
-    for i in range(0,len(score)):
-        print "%.2f" % score[i],
-        print " " + sentences[i][0]
+    #for i in range(0,len(score)):
+    #    print "%.2f" % score[i],
+    #    print " " + sentences[i][0]
     
     return sentences[bestAnswer][0]
 
@@ -307,9 +306,9 @@ textsPath = '../resources/remedia_release/';
 ansre = re.compile('([<]ANSQ)(\d)([>])');
 qre = re.compile('(\d)(\s*[.]\s*)([^\s].*[?])');
 
-corefre1 = re.compile('([<]COREF ID=")(\d*)(" REF="\d*"[>])([^<]*)([<]/COREF[>])');
-corefre2 = re.compile('([<]COREF ID=")(\d*)(" REF="\d*"[>][<]MARKABLE[>])([^<]*)([<]/MARKABLE[>][<]/COREF[>])');
-corefre3 = re.compile('([<]MARKABLE[>][<]COREF ID=")(\d*)(" REF="\d*"[>])([^<]*)([<]/COREF[>][<]/MARKABLE[>])');
+corefre1 = re.compile('([<]COREF ID="\d*" REF=")(\d*)("[>])([^<]*)([<]/COREF[>])');
+corefre2 = re.compile('([<]COREF ID="\d*" REF=")(\d*)("[>][<]MARKABLE[>])([^<]*)([<]/MARKABLE[>][<]/COREF[>])');
+corefre3 = re.compile('([<]MARKABLE[>][<]COREF ID="\d*" REF=")(\d*)("[>])([^<]*)([<]/COREF[>][<]/MARKABLE[>])');
 corefre4 = re.compile('([<]MARKABLE[>])([^<]*)([<]/MARKABLE[>])');
 corefre5 = re.compile('([<]COREF ID=")(\d*)("[>])([^<]*)([<]/COREF[>])');
 corefre6 = re.compile('([<]COREF ID=")(\d*)("[>][<]MARKABLE[>])([^<]*)([<]/MARKABLE[>][<]/COREF[>])');
@@ -321,6 +320,9 @@ weights={'PRP$':1,'VBG':1,
          'NNS':1, 'NNP':1, 'VB':1, 'WRB':1, 'CC':1,
          'RBR':1, 'CD':1, '-NONE-':0, 'IN':1, 'MD':1,
          'NNPS':1, 'JJS':1, 'JJR':1}
+
+weights4={'WRB': 0.39628601626111559, 'PRP$': 0.71584275114738904, 'VBG': 0.41544848640434506, 'VBD': 1.4762872745169731, 'CC': 0.63750733211878219, 'IN': 1.4972648780578646, 'VBN': 1.2799632527744693, 'POS': 0.39628601626111559, '-NONE-': 0, 'VBP': 1.3184399912206954, 'WDT': -0.23174647487149924, 'JJ': 1.8127739578666003, 'WP': -2.3025850929940455, 'VBZ': 1.4337370850951192, 'DT': 0, 'CD': 1.1872499018914846, 'MD': 1.2225502301940836, 'NNPS': 0.21584275114738904, 'RP': 0.89628601626111559, '$': -30.3025850929940455, 'NN': 1.7035887925742386, 'RBR': 1.23174647487149924, 'JJS': 0.18116446150742038, ',': 0, '.': 0, 'VB': 1.379068570587922, 'TO': 4.2961913175294344, 'PRP': 1.7433749904311804, 'RB': 0.9801850546085602, ':': -2.3025850929940455, 'NNS': 1.3737529457364159, 'JJR': -1.3025850929940455, 'NNP': 0.4186174249648332}
+
 
 scores=[.0, .0, .0, .0];
 counters=[-1, -1, -1, -1];
@@ -342,7 +344,7 @@ for level in range(2,6):
         sentences=getText(corefStory,corefre1,corefre2,corefre3,corefre4,corefre5,corefre6);
         locations,persons,times=getNamedEntities(neStory);
         for q in range(1,6):
-            [question,answer,constraints]=processQuestion(questions[q],corefre1,corefre2,corefre3,corefre4,corefre5,corefre6,weights);
+            [question,answer,constraints]=processQuestion(questions[q],corefre1,corefre2,corefre3,corefre4,corefre5,corefre6,weights4);
             result=getBestAnswer(question,constraints,sentences,(locations,persons,times));
             scores[level-2]=scores[level-2]+correctAnswer(result,answer[2:len(answer)-2]);
             counters[level-2]=counters[level-2]+1;
